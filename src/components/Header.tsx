@@ -12,7 +12,7 @@ const Header = () => {
 
   return (
     <div
-      className={cn("w-full border-b duration-150 transition-all ease-in-out")}
+      className={cn("w-full bg-indigo-100 border-b duration-150 transition-all ease-in-out md:text-lx")}
     >
       <Container>
         <div className="flex items-center gap-4 w-full">
@@ -20,19 +20,20 @@ const Header = () => {
           <LogoContainer />
 
           {/* navigation section */}
-          <nav className="hidden md:flex items-center gap-3"></nav>
+          <nav className="hidden md:flex items-center gap-3">
           <NavigationRoutes />
 
           {userId && (
             <NavLink
               to="generate"
               className={({ isActive }) =>
-                cn("text-base text-neutral-600", isActive && "text-neutral-900 font-semibold")
+                cn("text-base text-neutral-600 hover:underline hover:text-gray-500 md:text-lg", isActive && "text-neutral-900 font-semibold")
               }
             >
               Take an interview
             </NavLink>
           )}
+          </nav>
 
           {/* profile section */}
           <div className="ml-auto flex items-center gap-6">

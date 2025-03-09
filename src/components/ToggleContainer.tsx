@@ -27,7 +27,7 @@ const ToggleContainer = () => {
                 <SheetTitle />
             </SheetHeader>
 
-            <nav className="gap-6 flex flex-col items-center">
+            <nav className="gap-6 flex flex-col items-start pl-8">
                 <NavigationRoutes isMobile />
                 {
                     userId && (

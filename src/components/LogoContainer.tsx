@@ -6,7 +6,7 @@ const LogoContainer = () => {
       <img
         src="/src/assets/img/logo.png"
         alt="logo"
-        className="w-full h-14 object-contain"
+        className="h-14 object-contain"
       />
     </Link>
   );
