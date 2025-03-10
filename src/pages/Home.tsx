@@ -5,6 +5,7 @@ import ReviewCard from "@/components/ReviewCard";
 import { Button } from "@/components/ui/button";
 import { LineChart, MessageCircle, PieChart, WebcamIcon } from "lucide-react";
 import Marquee from "react-fast-marquee";
+import { Link } from "react-router-dom";
 
 const Home = () => {
   return (
@@ -25,12 +26,22 @@ const Home = () => {
             </p>
 
             <div className="flex flex-col gap-4 mt-15 items-center justify-center">
-              <Button className="bg-indigo-500 hover:bg-indigo-300 hover:text-black text-white w-full md:w-1/2">
-                Start Now
-              </Button>
-              <Button className="bg-white text-black hover:text-white hover:bg-indigo-500 border w-full md:w-1/2">
-                Watch Demo
-              </Button>
+              <Link
+                to="/generate"
+                className="hover:text-black text-white"
+              >
+                <Button className="w-40 h-10 bg-indigo-500 hover:bg-indigo-300 hover:text-black">
+                  Start Now
+                </Button>
+              </Link>
+              <Link
+                to="/demo"
+                className="hover:text-black text-white"
+              >
+                <Button className="w-40 h-10 bg-white text-black hover:bg-indigo-500 hover:text-white border">
+                  Watch Demo
+                </Button>
+              </Link>
             </div>
           </div>
 
@@ -163,9 +174,11 @@ const Home = () => {
           <h1 className="font-extrabold text-4xl text-center">
             Ready to Land Your Dream Job?
           </h1>
+          <Link to="/generate">
           <Button className="bg-indigo-500 mt-4 font-bold hover:bg-indigo-300 hover:text-black">
             Start Free Practice
           </Button>
+          </Link>
         </div>
       </Container>
     </div>
