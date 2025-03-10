@@ -308,6 +308,7 @@ const FormMockInterview = ({initialData} : FormMockInterviewProps) => {
               size={"sm"}
               variant={"outline"}
               disabled={isSubmitting || !isValid || loading}
+              className="bg-indigo-500 hover:bg-indigo-300 text-white hover:text-black"
             >
               {loading ? (
                 <Loader className="text-gray-50 animate-spin"/>

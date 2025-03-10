@@ -21,8 +21,9 @@ const Home = () => {
             </p>
 
             <p className="mt-4 text-md text-center md:text-left">
-              Practice with realistic interview scenarios, get instant feedback,
-              and improve your interview skills with our AI interviewer.
+              {/* Practice with realistic interview scenarios, get instant feedback,
+              and improve your interview skills with our AI interviewer. */}
+              Generate personalized, job-specific interview questions based on your role and interview type. Practice with realistic mock interviews, record your responses, and receive AI-powered feedback to improve your answers.
             </p>
 
             <div className="flex flex-col gap-4 mt-15 items-center justify-center">
