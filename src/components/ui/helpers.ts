@@ -3,12 +3,12 @@ const MainRoutes = [
     label: "Home",
     href: "/",
     },
+    // {
+    // label: "Dashboard",
+    // href: "/dashboard",
+    // },
     {
-    label: "Dashboard",
-    href: "/dashboard",
-    },
-    {
-    label: "Questions",
+    label: "Question Generator",
     href: "/questions",
     },
 ];
