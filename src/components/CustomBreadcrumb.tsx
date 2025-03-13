@@ -24,7 +24,7 @@ const CustomBreadcrumb = ({
         <BreadcrumbItem>
           <BreadcrumbLink
             href="/"
-            className="flex items-center justify-center hover:text-emerald-500"
+            className="flex items-center justify-center hover:text-sky-500"
           >
             <Home className="w-3 h-3 mr-2" />
             Home
@@ -38,7 +38,7 @@ const CustomBreadcrumb = ({
               <BreadcrumbItem>
                 <BreadcrumbLink 
                   href="/components"
-                  className="hover:text-emerald-500"
+                  className="hover:text-sky-500"
                 >
                   {item.label}
                 </BreadcrumbLink>

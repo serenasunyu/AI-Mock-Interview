@@ -28,7 +28,7 @@ const InterviewPin = ({ interview, onMockPage = false }: InterviewPinProps) => {
           <Badge
             key={index}
             variant={"outline"}
-            className="text-xs text-muted-foreground hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-900"
+            className="text-xs text-muted-foreground hover:border-sky-400 hover:bg-sky-50 hover:text-sky-900"
           >
             {word}
           </Badge>
