@@ -12,6 +12,7 @@ import CreateEditPage from "./pages/CreateEditPage";
 import MockLoadPage from "./pages/MockLoadPage";
 import MockInterviewPage from "./pages/MockInterviewPage";
 import Feedback from "./pages/Feedback";
+import InterviewQuestionsGenerator from "./pages/InterviewQuestionsGenerator";
 
 const App = () => {
   return (
@@ -20,6 +21,7 @@ const App = () => {
         {/* public routes */}
         <Route element={<PublicLayout />}>
           <Route index element={<Home />} />
+          <Route path="/questions" element={<InterviewQuestionsGenerator />}/>
         </Route>
 
         {/* authentication layout */}
