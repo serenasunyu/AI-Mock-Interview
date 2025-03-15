@@ -1,46 +1,47 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@clerk/clerk-react";
+import { collection, query, orderBy, limit, getDocs, doc, updateDoc } from "firebase/firestore";
+import { db } from "@/config/firebase.config";
 
 const AIQuestionsSection = () => {
-  const [questions, setQuestions] = useState<string[]>([
-    "Tell me about yourself.",
-    "What are your strengths and weaknesses?",
-    "Why do you want to work here?",
-    "Describe a challenge you faced and how you handled it.",
-    "Where do you see yourself in 5 years?",
-    "Why should we hire you?",
-    "Tell me about a time you worked in a team.",
-    "Describe a situation where you had to meet a tight deadline.",
-    "What motivates you?",
-    "Do you have any questions for us?",
-  ]);
+  const [questions, setQuestions] = useState<string[]>([]);
+  const [docId, setDocId] = useState<string | null>(null); // Store the Firestore document ID
+  const { userId } = useAuth();
 
-  // Delete a question by index
-  const deleteQuestion = (index: number) => {
-    setQuestions((prev) => prev.filter((_, i) => i !== index));
-  };
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const q = query(collection(db, "interviewQuestions"), orderBy("timestamp", "desc"), limit(1));
+        const querySnapshot = await getDocs(q);
 
-  // Generate 10 more questions (replace with real API call)
-  const generateMoreQuestions = () => {
-    const newQuestions = [
-      "What do you know about our company?",
-      "How do you handle conflict at work?",
-      "What is your greatest achievement?",
-      "Describe your ideal work environment.",
-      "Tell me about a time you failed and what you learned.",
-      "How do you handle criticism?",
-      "What do you do in your free time?",
-      "Describe a project you're proud of.",
-      "Tell me about a time you showed leadership.",
-      "What do you think makes a good team player?",
-    ];
-    setQuestions((prev) => [...prev, ...newQuestions]);
-  };
+        if (!querySnapshot.empty) {
+          const latestDoc = querySnapshot.docs[0];
+          setQuestions(latestDoc.data().questions || []);
+          setDocId(latestDoc.id); // Store document ID for later updates
+        }
+      } catch (error) {
+        console.error("Error fetching questions:", error);
+      }
+    };
 
-  // Save questions for later (replace with actual API request)
-  const saveQuestions = () => {
-    console.log("Saving questions:", questions);
-    alert("Questions saved successfully!");
+    fetchQuestions();
+  }, []);
+
+  // Delete a question and update Firestore
+  const deleteQuestion = async (index: number) => {
+    const updatedQuestions = questions.filter((_, i) => i !== index);
+    setQuestions(updatedQuestions);
+
+    if (docId) {
+      try {
+        await updateDoc(doc(db, "interviewQuestions", docId), {
+          questions: updatedQuestions,
+        });
+      } catch (error) {
+        console.error("Error updating Firestore:", error);
+      }
+    }
   };
 
   return (
@@ -51,36 +52,18 @@ const AIQuestionsSection = () => {
       <div className="space-y-2">
         {questions.length > 0 ? (
           questions.map((question, index) => (
-            <div
-              key={index}
-              className="flex justify-between items-center p-2 border-b last:border-b-0"
-            >
+            <div key={index} className="flex justify-between items-center p-2 border-b last:border-b-0">
               <span className="text-gray-700">{question}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => deleteQuestion(index)}
-                className="text-red-500"
-              >
-                Delete
-              </Button>
+              {userId && (
+                <Button variant="outline" size="sm" onClick={() => deleteQuestion(index)} className="text-red-500">
+                  Delete
+                </Button>
+              )}
             </div>
           ))
         ) : (
-          <p className="text-gray-400 text-center">
-            Your interview questions will appear here
-          </p>
+          <p className="text-gray-400 text-center">Your interview questions will appear here</p>
         )}
-      </div>
-
-      {/* Buttons */}
-      <div className="flex justify-between mt-4">
-        <Button onClick={generateMoreQuestions} variant="outline">
-          More
-        </Button>
-        <Button onClick={saveQuestions} variant="default">
-          Save
-        </Button>
       </div>
     </div>
   );
