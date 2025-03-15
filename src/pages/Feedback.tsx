@@ -173,7 +173,7 @@ const Feedback = () => {
 
                 <Card className="border-none space-y-3 p-4 bg-sky-50 rounded-lg shadow-md">
                   <CardTitle className="flex items-center text-lg">
-                    <CircleCheck className="mt-2 text-yellow-600" />
+                    <CircleCheck className="mr-2 text-sky-600" />
                     Your Answer
                   </CardTitle>
 
@@ -184,7 +184,7 @@ const Feedback = () => {
 
                 <Card className="border-none space-y-3 p-4 bg-sky-50 rounded-lg shadow-md">
                   <CardTitle className="flex items-center text-lg">
-                    <CircleCheck className="mt-2 text-yellow-600" />
+                    <CircleCheck className="mr-2 text-sky-600" />
                     Feedback
                   </CardTitle>
 

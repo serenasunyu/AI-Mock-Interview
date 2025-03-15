@@ -37,7 +37,7 @@ const CustomBreadcrumb = ({
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 <BreadcrumbLink 
-                  href="/components"
+                  href="/generate"
                   className="hover:text-sky-500"
                 >
                   {item.label}

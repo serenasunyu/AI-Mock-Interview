@@ -13,6 +13,8 @@ import MockLoadPage from "./pages/MockLoadPage";
 import MockInterviewPage from "./pages/MockInterviewPage";
 import Feedback from "./pages/Feedback";
 import InterviewQuestionsGenerator from "./pages/InterviewQuestionsGenerator";
+import QuestionList from "./pages/QuestionList";
+import CustomizedMockInterview from "./pages/CustomizedMockInterview";
 
 const App = () => {
   return (
@@ -22,6 +24,8 @@ const App = () => {
         <Route element={<PublicLayout />}>
           <Route index element={<Home />} />
           <Route path="/questions" element={<InterviewQuestionsGenerator />}/>
+          <Route path="/questionlist" element={<QuestionList />} />
+          <Route path="/mock-interview" element={<CustomizedMockInterview />} />
         </Route>
 
         {/* authentication layout */}
