@@ -65,7 +65,7 @@ const Dashboard = () => {
             />
             <Link to="/generate/create">
                 <Button size={"lg"} className="font-bold bg-indigo-500 hover:bg-indigo-300 hover:text-black">
-                    <Plus /> Start
+                    <Plus /> Create
                 </Button>
             </Link>
         </div>

@@ -9,7 +9,7 @@ import {
 import { Badge } from "./ui/badge";
 import { cn } from "@/lib/utils";
 import TooltipButton from "./TooltipButton";
-import { Eye, Newspaper, Sparkle } from "lucide-react";
+import { Eye, Newspaper, SquareArrowRightIcon } from "lucide-react";
 
 interface InterviewPinProps {
   interview: Interview;
@@ -82,11 +82,11 @@ const InterviewPin = ({ interview, onMockPage = false }: InterviewPinProps) => {
                 content="Start"
                 buttonVariant={"ghost"}
                 onClick={() => {
-                    navigate(`/generate/interview/${interview.id}`, {replace: true});
+                    navigate(`/generate/interview/${interview.id}/start`, {replace: true});
                 }}
                 disabled={false}
                 buttonClassName="hover:text-sky-500"
-                icon={<Sparkle />}
+                icon={<SquareArrowRightIcon />}
                 loading={false}
             />
           </div>

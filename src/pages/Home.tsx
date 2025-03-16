@@ -26,7 +26,7 @@ const Home = () => {
               Generate personalized, job-specific interview questions based on your role and interview type. Practice with realistic mock interviews, record your responses, and receive AI-powered feedback to improve your answers.
             </p>
 
-            <div className="flex flex-col gap-4 mt-15 items-center justify-center">
+            <div className="flex gap-4 mt-15 items-center justify-center">
               <Link
                 to="/generate"
                 className="hover:text-black text-white"
