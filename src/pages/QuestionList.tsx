@@ -167,7 +167,7 @@ export default function QuestionList() {
     sessionStorage.setItem('mockInterviewQuestions', JSON.stringify(selectedQuestions));
 
     // Navigate to the mock interview page
-    navigate('/mock-interview');
+    navigate('/questions/mock-interview');
   };
 
   const clearSelection = () => {

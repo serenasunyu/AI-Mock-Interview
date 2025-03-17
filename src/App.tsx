@@ -24,10 +24,14 @@ const App = () => {
         {/* public routes */}
         <Route element={<PublicLayout />}>
           <Route index element={<Home />} />
-          <Route path="/questions" element={<InterviewQuestionsGenerator />}/>
-          <Route path="/questionlist" element={<QuestionList />} />
-          <Route path="/mock-interview" element={<CustomizedMockInterview />} />
-          <Route path="/mock-interview/feedback" element={<InterviewFeedback />} />
+
+          {/* Question Generator section - public */}
+          <Route path="/questions">
+            <Route index element={<InterviewQuestionsGenerator />}/>
+            <Route path="question-list" element={<QuestionList />} />
+            <Route path="mock-interview" element={<CustomizedMockInterview />} />
+            <Route path="mock-interview/feedback" element={<InterviewFeedback />} />
+          </Route>
         </Route>
 
         {/* authentication layout */}

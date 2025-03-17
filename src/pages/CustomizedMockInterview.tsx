@@ -86,20 +86,20 @@ export default function MockInterview() {
     const savedQuestions = sessionStorage.getItem("mockInterviewQuestions");
     if (!savedQuestions) {
       alert("No questions selected for mock interview");
-      navigate("/questionlist");
+      navigate("/questions/question-list");
       return;
     }
 
     try {
       const parsedQuestions = JSON.parse(savedQuestions) as QuestionItem[];
       if (parsedQuestions.length === 0) {
-        navigate("/questionlist");
+        navigate("/questions/question-list");
         return;
       }
       setQuestions(parsedQuestions);
     } catch (error) {
       console.error("Error parsing saved questions:", error);
-      navigate("/questionlist");
+      navigate("/questions/question-list");
     }
 
     // Clean up on unmount
@@ -340,7 +340,7 @@ export default function MockInterview() {
     stopCameraAndCleanup();
     
     // Navigate to feedback page
-    navigate("/mock-interview/feedback");
+    navigate("/questions/mock-interview/feedback");
   };
 
   const discardRecording = () => {
@@ -392,7 +392,7 @@ export default function MockInterview() {
     if (isSpeechRecording) {
       stopSpeechToText();
     }
-    navigate("/questionlist");
+    navigate("/questions/question-list");
   };
 
   // If no questions loaded yet, show loading

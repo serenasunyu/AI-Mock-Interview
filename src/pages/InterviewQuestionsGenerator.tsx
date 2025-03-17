@@ -131,7 +131,7 @@ export default function InterviewQuestionsGenerator() {
       });
       alert("Questions saved successfully!");
       console.log("Questions saved with ID:", docRef.id);
-      navigate("/questionlist");
+      navigate("/questions/question-list");
     } catch (error) {
       console.error("Error saving questions: ", error);
     } finally {
@@ -302,7 +302,7 @@ export default function InterviewQuestionsGenerator() {
               <Button 
                 onClick={saveQuestions} 
                 variant="default" 
-                className="bg-violet-500 hover:bg-violet-300"
+                className="bg-violet-500 hover:bg-violet-300 hover:text-black"
               >
                 Save
               </Button>

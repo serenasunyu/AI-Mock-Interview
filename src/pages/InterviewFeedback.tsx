@@ -41,7 +41,7 @@ export default function InterviewFeedback() {
     const savedInterviewId = sessionStorage.getItem("currentInterviewId");
     if (!savedInterviewId) {
       alert("No interview selected for feedback");
-      navigate("/questionlist");
+      navigate("/questions/question-list");
       return;
     }
 
@@ -343,7 +343,7 @@ export default function InterviewFeedback() {
         <h1 className="text-2xl font-bold">Interview Feedback</h1>
         <Button 
           variant="outline"
-          onClick={() => navigate("/questionlist")}
+          onClick={() => navigate("/questions/question-list")}
           className="bg-violet-500 text-white hover:bg-violet-300 hover:text-black"
         >
           Back to Questions
