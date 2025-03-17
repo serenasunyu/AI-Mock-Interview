@@ -11,13 +11,22 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, doc, setDoc, collection } from "firebase/firestore";
+import useSpeechToText, { ResultType } from 'react-hook-speech-to-text';
+import { db } from "@/config/firebase.config";
 
 interface QuestionItem {
   id: string;
   entryId: string;
   jobTitle: string;
   question: string;
+  timestamp: Timestamp;
+}
+
+interface TranscriptionData {
+  questionId: string;
+  question: string;
+  transcript: string;
   timestamp: Timestamp;
 }
 
@@ -31,11 +40,46 @@ export default function MockInterview() {
   const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
   const [interviewCompleted, setInterviewCompleted] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [transcriptionProgress, setTranscriptionProgress] = useState(0);
+  const [transcriptions, setTranscriptions] = useState<TranscriptionData[]>([]);
+  const [currentTranscript, setCurrentTranscript] = useState("");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const timerRef = useRef<number | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
+
+  // Initialize speech to text hook
+  const {
+    error,
+    interimResult,
+    isRecording: isSpeechRecording,
+    results,
+    startSpeechToText,
+    stopSpeechToText,
+  } = useSpeechToText({
+    continuous: true,
+    useLegacyResults: false,
+    speechRecognitionProperties: {
+      lang: 'en-US',
+    },
+  });
+
+  // Combine speech results into current transcript - FIXED to prevent infinite loop
+  useEffect(() => {
+    if (results.length > 0) {
+      const transcript = results
+        .filter((result): result is ResultType => typeof result !== "string")
+        .map((result) => result.transcript)
+        .join(" ");
+      
+      // Only update if transcript has changed
+      if (transcript !== currentTranscript) {
+        setCurrentTranscript(transcript);
+      }
+    }
+  }, [results]);
 
   useEffect(() => {
     // Load selected questions from session storage
@@ -61,8 +105,11 @@ export default function MockInterview() {
     // Clean up on unmount
     return () => {
       stopCameraAndCleanup();
+      if (isSpeechRecording) {
+        stopSpeechToText();
+      }
     };
-  }, [navigate]);
+  }, [navigate]);  // Removed dependencies that could cause re-runs
 
   const stopCameraAndCleanup = () => {
     if (videoStream) {
@@ -84,6 +131,9 @@ export default function MockInterview() {
   const startCamera = async () => {
     // Reset interview completed state when starting camera
     setInterviewCompleted(false);
+    // Reset transcriptions when starting new recording session
+    setTranscriptions([]);
+    setCurrentTranscript("");
     
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -111,6 +161,79 @@ export default function MockInterview() {
       alert(
         "Unable to access camera and microphone. Please check permissions."
       );
+    }
+  };
+
+  const saveTranscription = () => {
+    const currentQuestion = questions[currentQuestionIndex];
+    
+    // Create a new transcription entry
+    const transcriptionData: TranscriptionData = {
+      questionId: currentQuestion.id,
+      question: currentQuestion.question,
+      transcript: currentTranscript,
+      timestamp: Timestamp.now()
+    };
+    
+    // Add to local state
+    setTranscriptions(prev => [...prev, transcriptionData]);
+    
+    // Reset current transcript for next question
+    setCurrentTranscript("");
+  };
+
+  const saveAllTranscriptionsToFirebase = async () => {
+    if (transcriptions.length === 0) {
+      console.log("No transcriptions to save");
+      return;
+    }
+    
+    try {
+      setIsTranscribing(true);
+      
+      // Generate a unique interview ID
+      const interviewId = `interview_${Date.now()}`;
+      
+      // Save each transcription with progress updates
+      for (let i = 0; i < transcriptions.length; i++) {
+        const transcription = transcriptions[i];
+        
+        // Create a document reference
+        const interviewRef = doc(collection(db, "interviews"), interviewId);
+        const transcriptionRef = doc(collection(interviewRef, "transcriptions"), transcription.questionId);
+        
+        // Save transcription
+        await setDoc(transcriptionRef, {
+          question: transcription.question,
+          transcript: transcription.transcript,
+          timestamp: transcription.timestamp,
+          jobTitle: questions.find(q => q.id === transcription.questionId)?.jobTitle || ""
+        });
+        
+        // Update progress
+        setTranscriptionProgress(Math.floor(((i + 1) / transcriptions.length) * 100));
+      }
+      
+      // Save interview metadata
+      const interviewRef = doc(collection(db, "interviews"), interviewId);
+      await setDoc(interviewRef, {
+        title: `Mock Interview - ${new Date().toLocaleDateString()}`,
+        createdAt: Timestamp.now(),
+        questionCount: transcriptions.length,
+        jobTitle: questions[0]?.jobTitle || "Interview"
+      });
+      
+      console.log("All transcriptions saved successfully!");
+      
+      // Store interview ID for feedback page
+      sessionStorage.setItem("currentInterviewId", interviewId);
+      
+    } catch (error) {
+      console.error("Error saving transcriptions:", error);
+      alert("Failed to save interview transcriptions. Please try again.");
+    } finally {
+      setIsTranscribing(false);
+      setTranscriptionProgress(0);
     }
   };
 
@@ -154,9 +277,17 @@ export default function MockInterview() {
       
       // Show download dialog whenever recording is stopped
       setShowDownloadDialog(true);
+      
+      // Save the current transcription when stopping the recording
+      if (currentTranscript) {
+        saveTranscription();
+      }
     };
 
     mediaRecorderRef.current.start();
+
+    // Start speech-to-text
+    startSpeechToText();
 
     setIsRecording(true);
     setTimeElapsed(0);
@@ -175,10 +306,21 @@ export default function MockInterview() {
       if (timerRef.current) {
         window.clearInterval(timerRef.current);
       }
+      
+      // Stop speech-to-text
+      stopSpeechToText();
+      
+      // Save current transcription
+      if (currentTranscript) {
+        saveTranscription();
+      }
     }
   };
 
-  const downloadRecording = () => {
+  const downloadRecording = async () => {
+    // First save all transcriptions to Firebase
+    await saveAllTranscriptionsToFirebase();
+    
     if (recordingUrl) {
       const a = document.createElement("a");
       a.style.display = "none";
@@ -196,28 +338,34 @@ export default function MockInterview() {
     // Close dialog and reset camera
     setShowDownloadDialog(false);
     stopCameraAndCleanup();
+    
+    // Navigate to feedback page
+    navigate("/mock-interview/feedback");
   };
 
   const discardRecording = () => {
     // Close dialog and reset camera
     setShowDownloadDialog(false);
     stopCameraAndCleanup();
-    
-    // Optional: Reset to first question if you want users to start over
-    // setCurrentQuestionIndex(0);
+    setTranscriptions([]);
   };
 
   const nextQuestion = () => {
+    // Save current transcription before moving to next question
+    if (isRecording && currentTranscript) {
+      saveTranscription();
+    }
+    
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
+      // Reset current transcript for new question
+      setCurrentTranscript("");
     } else {
       // End of interview - mark as completed and stop recording if active
       setInterviewCompleted(true);
       if (isRecording) {
         stopRecording();
       }
-      // Navigate to the feedback page
-      navigate("/mock-interview/feedback");
     }
   };
 
@@ -241,6 +389,9 @@ export default function MockInterview() {
     }
 
     stopCameraAndCleanup();
+    if (isSpeechRecording) {
+      stopSpeechToText();
+    }
     navigate("/questionlist");
   };
 
@@ -266,7 +417,7 @@ export default function MockInterview() {
           <span className="font-medium">
             Question {currentQuestionIndex + 1} of {questions.length}
           </span>
-          <Button variant="outline" onClick={exitInterview} className="bg-violet-500 text-white hover:bg-violet-300 hover:text-black">
+          <Button variant="outline" onClick={exitInterview}>
             Exit
           </Button>
         </div>
@@ -288,11 +439,10 @@ export default function MockInterview() {
                   variant="outline"
                   onClick={prevQuestion}
                   disabled={currentQuestionIndex === 0}
-                  className="bg-violet-500 hover:bg-violet-300 hover:text-black"
                 >
                   Previous
                 </Button>
-                <Button onClick={nextQuestion} className="bg-violet-500 hover:bg-violet-300 hover:text-black">
+                <Button onClick={nextQuestion}>
                   {isLastQuestion ? "Finish Interview" : "Next Question"}
                 </Button>
               </div>
@@ -316,6 +466,10 @@ export default function MockInterview() {
                 </li>
                 <li className="flex items-baseline">
                   <span className="mr-2">•</span>
+                  Provide specific examples from your experience
+                </li>
+                <li className="flex items-baseline">
+                  <span className="mr-2">•</span>
                   Speak clearly and maintain good posture
                 </li>
                 <li className="flex items-baseline">
@@ -329,13 +483,33 @@ export default function MockInterview() {
               </ul>
             </CardContent>
           </Card>
+
+          {/* Show current transcript while recording */}
+          {isRecording && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Live Transcription</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="max-h-32 overflow-y-auto bg-muted p-3 rounded-md text-sm">
+                  {currentTranscript || "Listening..."}
+                  {interimResult && <span className="text-muted-foreground">{" " + interimResult}</span>}
+                </div>
+                {error && (
+                  <p className="text-destructive text-xs mt-2">
+                    Error: {error}. Try refreshing the page.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="space-y-4">
           <div className="bg-gray-300 rounded-lg overflow-hidden aspect-video relative">
             {!videoStream ? (
               <div className="absolute inset-0 flex items-center justify-center">
-                <Button onClick={startCamera} variant="default" className="bg-violet-500 hover:bg-violet-300 hover:text-black">
+                <Button onClick={startCamera} variant="default">
                   Start Camera
                 </Button>
               </div>
@@ -379,7 +553,7 @@ export default function MockInterview() {
 
           <Alert>
             <AlertDescription className="text-sm">
-              Your recording will include all interview questions in one video. When you stop recording, you'll have the option to download your response. After downloading or discarding, you'll need to start the camera again if you want to record another session.
+              Your recording will include all interview questions in one video. When you stop recording, you'll have the option to download your response. Speech is being transcribed to provide AI feedback after the interview.
             </AlertDescription>
           </Alert>
         </div>
@@ -400,6 +574,7 @@ export default function MockInterview() {
             <DialogTitle>Interview Recording Complete</DialogTitle>
             <DialogDescription>
               You've finished recording your interview. Would you like to download it?
+              {transcriptions.length > 0 && " Your answers have been transcribed for AI feedback."}
             </DialogDescription>
           </DialogHeader>
 
@@ -413,11 +588,27 @@ export default function MockInterview() {
             )}
           </div>
 
+          {isTranscribing && (
+            <div className="mb-4">
+              <p className="text-sm mb-2">Saving transcriptions... {transcriptionProgress}%</p>
+              <div className="w-full bg-muted rounded-full h-2.5">
+                <div 
+                  className="bg-primary h-2.5 rounded-full" 
+                  style={{ width: `${transcriptionProgress}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+
           <DialogFooter className="sm:justify-start">
-            <Button variant="default" onClick={downloadRecording}>
-              Download Recording
+            <Button 
+              variant="default" 
+              onClick={downloadRecording}
+              disabled={isTranscribing}
+            >
+              {isTranscribing ? "Processing..." : "Download & Save Transcription"}
             </Button>
-            <Button variant="outline" onClick={discardRecording}>
+            <Button variant="outline" onClick={discardRecording} disabled={isTranscribing}>
               Discard
             </Button>
           </DialogFooter>

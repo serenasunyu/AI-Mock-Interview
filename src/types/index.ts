@@ -36,3 +36,22 @@ export interface UserAnswer {
     createdAt: Timestamp;
     updatedAt: Timestamp;
 };
+
+// AI feedback
+export interface FeedbackQuestion {
+    question: string;
+    answer: string;
+    feedback: {
+      score: number;
+      strengths: string[];
+      improvements: string[];
+      suggestedAnswer: string;
+    }
+  };
+
+  export interface TranscriptionSegment {
+    speaker: "interviewer" | "candidate";
+    text: string;
+    startTime: number;
+    endTime: number;
+  };

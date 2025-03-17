@@ -15,6 +15,7 @@ import Feedback from "./pages/Feedback";
 import InterviewQuestionsGenerator from "./pages/InterviewQuestionsGenerator";
 import QuestionList from "./pages/QuestionList";
 import CustomizedMockInterview from "./pages/CustomizedMockInterview";
+import InterviewFeedback from "./pages/InterviewFeedback";
 
 const App = () => {
   return (
@@ -26,6 +27,7 @@ const App = () => {
           <Route path="/questions" element={<InterviewQuestionsGenerator />}/>
           <Route path="/questionlist" element={<QuestionList />} />
           <Route path="/mock-interview" element={<CustomizedMockInterview />} />
+          <Route path="/mock-interview/feedback" element={<InterviewFeedback />} />
         </Route>
 
         {/* authentication layout */}
