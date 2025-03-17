@@ -119,7 +119,7 @@ const Step: FC<StepProps> = ({ step, progress }) => {
   const ref = useRef<HTMLDivElement>(null);
 
   return (
-    <div ref={ref} className="mb-28 relative">
+    <div ref={ref} className="mb-14 relative">
       {/* Timeline line */}
       <div className="absolute left-0 top-0 bottom-0 w-1 bg-gray-200" />
 
@@ -182,7 +182,7 @@ const HowItWorks: FC = () => {
   });
 
   return (
-    <section className="py-24 bg-gray-50 relative" ref={containerRef}>
+    <section className="py-24 bg-gray-50 relative mt-4" ref={containerRef}>
       <div className="max-w-6xl mx-auto px-8">
         <motion.h2
           className="text-center text-4xl font-bold mb-16 text-gray-800"

@@ -39,7 +39,7 @@ const Home = () => {
                 to="/demo"
                 className="hover:text-black text-white"
               >
-                <Button className="w-40 h-10 bg-white text-black hover:bg-indigo-500 hover:text-white border">
+                <Button className="w-40 h-10 bg-white text-black hover:bg-indigo-300 hover:text-white border">
                   Watch Demo
                 </Button>
               </Link>
@@ -99,7 +99,9 @@ const Home = () => {
         </div>
 
         {/* features */}
-        <section className="py-16 bg-gray-50 rounded-lg flex flex-wrap justify-center gap-10">
+        <section className="flex flex-col bg-gray-50 rounded-lg">
+          <h2 className="text-center pt-18 text-4xl font-bold mb-8 text-gray-800">AI-Driven Features to Elevate Your Interview Performance</h2>
+          <div className="py-16 bg-gray-50 rounded-lg flex flex-wrap justify-center gap-10">
           <FeatureCard
             icon={MessageCircle}
             title="AI Interview Simulation"
@@ -120,6 +122,7 @@ const Home = () => {
             title="Record Your Interviews"
             description="Capture your mock interviews and play them back to analyze your responses, body language, and speaking style"
           />
+          </div>
         </section>
 
         {/* how it works */}
@@ -130,7 +133,7 @@ const Home = () => {
 
       {/* customer reviews marquee */}
       <section className="py-16 bg-gray-50 rounded-lg">
-        <h2 className="text-center text-3xl font-bold mb-10">
+        <h2 className="text-center text-4xl text-gray-800 font-bold mb-10">
           What Our Users Say
         </h2>
         <Marquee gradient={false} speed={50} pauseOnHover className="gap-5">
@@ -172,7 +175,7 @@ const Home = () => {
       <Container>
         {/* call to action */}
         <div className="flex flex-col justify-center items-center py-12">
-          <h1 className="font-extrabold text-4xl text-center">
+          <h1 className="font-extrabold text-4xl text-center text-gray-800">
             Ready to Land Your Dream Job?
           </h1>
           <Link to="/generate">
