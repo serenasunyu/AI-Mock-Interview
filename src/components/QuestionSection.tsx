@@ -7,13 +7,15 @@ import RecordAnswer from "./RecordAnswer";
 
 interface QuestionSectionProps {
     questions: {question: string; answer: string}[];
+    position: string;
 };
 
-const QuestionSection = ({questions} : QuestionSectionProps) => {
+const QuestionSection = ({questions, position} : QuestionSectionProps) => {
     
     const [isPlaying, setIsPlaying] = useState(false);
     const [isWebCam, setIsWebCam] = useState(false);
     const [currentSpeech, setCurrentSpeech] = useState<SpeechSynthesisUtterance | null>(null);
+
 
     const handlePlayQuestion = (qst: string) => {
         if (isPlaying && currentSpeech) {
@@ -40,6 +42,7 @@ const QuestionSection = ({questions} : QuestionSectionProps) => {
 
   return (
     <div className="w-full min-h-96 border rounded-md p-4">
+        <h2 className="my-2 ml-1 text-xl py-2 bg-sky-100 w-1/5 rounded-2xl text-center">{position}</h2>
         <Tabs
             defaultValue={questions[0]?.question}
             className="w-full space-y-12"
