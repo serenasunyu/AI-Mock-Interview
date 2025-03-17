@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +16,6 @@ import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "@/config/firebase.config";
 import { useAuth } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
-import { useRef } from "react";
 
 interface Question {
   id: number;
@@ -25,12 +24,16 @@ interface Question {
 
 export default function InterviewQuestionsGenerator() {
   const [jobTitle, setJobTitle] = useState<string>("");
+  const [jobDescription, setJobDescription] = useState<string>("");
   const [experienceLevel, setExperienceLevel] = useState<string>("");
   const [type, setType] = useState<string>("");
   const [customType, setCustomType] = useState<string>("");
   const [industry, setIndustry] = useState<string>("");
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [allQuestions, setAllQuestions] = useState<Question[]>([]);
+  const [displayedQuestions, setDisplayedQuestions] = useState<Question[]>([]);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const questionsPerPage = 10;
 
   const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
   const genAI = new GoogleGenerativeAI(API_KEY);
@@ -39,17 +42,16 @@ export default function InterviewQuestionsGenerator() {
   const isSaving = useRef(false);
 
   // Generate AI interview questions
-  const generateQuestions = async () => {
+  const generateQuestions = async (shouldAppend = false) => {
     if (!jobTitle) return;
 
     setIsGenerating(true);
 
-    // const prompt = `Generate interview questions for a ${jobTitle} at ${experienceLevel || "any"} level in the ${industry || "general"} industry.`;
     const prompt = `Generate 10 interview questions based on the ${type} for a ${jobTitle} at ${
       experienceLevel || "any"
-    } level in the ${
-      industry || "general"
-    } industry. Only output the 10 questions as a numbered list without any additional text.`;
+    } level in the ${industry || "general"} industry.${
+      jobDescription ? ` Consider the following job description: "${jobDescription}".` : ""
+    } Only output the 10 questions as a numbered list without any additional text.`;    
 
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -61,38 +63,55 @@ export default function InterviewQuestionsGenerator() {
         .split("\n")
         .filter((q) => q.trim())
         .map((q, index) => ({
-          id: index + 1,
+          id: Date.now() + index, // Use timestamp + index for unique IDs
           text: q.replace(/^\d+\.\s*/, "").trim(),
         }));
 
-      setQuestions(generatedQuestions);
-      // setIsGenerating(false);
-
-      // Save generated questions to Firebase
-      // const docRef = await addDoc(collection(db, "interviewQuestions"), {
-      //   jobTitle,
-      //   experienceLevel,
-      //   type: type === "others" ? customType : type,
-      //   industry,
-      //   questions: generatedQuestions.map((q) => q.text),
-      //   timestamp: Timestamp.now(),
-      // });
-
-      // console.log("Questions saved to Firebase: ", docRef.id);
+      if (shouldAppend) {
+        // Append new questions to existing ones
+        const updatedQuestions = [...allQuestions, ...generatedQuestions];
+        setAllQuestions(updatedQuestions);
+        
+        // Update displayed questions
+        updateDisplayedQuestions(updatedQuestions, currentPage);
+      } else {
+        // Replace with new questions
+        setAllQuestions(generatedQuestions);
+        setDisplayedQuestions(generatedQuestions.slice(0, questionsPerPage));
+        setCurrentPage(1);
+      }
+      
+      setIsGenerating(false);
     } catch (error) {
       console.error("Error generating questions: ", error);
       setIsGenerating(false);
     }
   };
 
+  // Update which questions are displayed based on current page
+  const updateDisplayedQuestions = (questions: Question[], page: number) => {
+    const startIndex = 0;
+    const endIndex = page * questionsPerPage;
+    setDisplayedQuestions(questions.slice(startIndex, endIndex));
+  };
+
+  // Load more questions (show next page)
+  const loadMoreQuestions = () => {
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    updateDisplayedQuestions(allQuestions, nextPage);
+  };
+
   // Delete a question by index
-  const deleteQuestion = (index: number) => {
-    setQuestions((prev) => prev.filter((_, i) => i !== index));
+  const deleteQuestion = (id: number) => {
+    const updatedQuestions = allQuestions.filter(q => q.id !== id);
+    setAllQuestions(updatedQuestions);
+    updateDisplayedQuestions(updatedQuestions, currentPage);
   };
 
   // Generate 10 more questions
   const generateMoreQuestions = async () => {
-    await generateQuestions();
+    await generateQuestions(true); // Pass true to append instead of replace
   };
 
   // Save questions for later
@@ -106,7 +125,7 @@ export default function InterviewQuestionsGenerator() {
         experienceLevel,
         type: type === "others" ? customType : type,
         industry,
-        questions: questions.map((q) => q.text),
+        questions: allQuestions.map((q) => q.text),
         timestamp: Timestamp.now(),
         userId,
       });
@@ -119,6 +138,9 @@ export default function InterviewQuestionsGenerator() {
       isSaving.current = false; // Reset flag after save completes
     }
   };
+
+  // Check if there are more questions to load
+  const hasMoreQuestionsToLoad = allQuestions.length > currentPage * questionsPerPage;
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
@@ -136,7 +158,7 @@ export default function InterviewQuestionsGenerator() {
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <Label htmlFor="job-title">Job title</Label>
+              <Label htmlFor="job-title">Job Title</Label>
               <Input
                 id="job-title"
                 placeholder="Software Engineer"
@@ -147,7 +169,7 @@ export default function InterviewQuestionsGenerator() {
             </div>
 
             <div>
-              <Label htmlFor="experience-level">Experience level</Label>
+              <Label htmlFor="experience-level">Experience Level</Label>
               <Select
                 value={experienceLevel || ""}
                 onValueChange={setExperienceLevel}
@@ -203,11 +225,22 @@ export default function InterviewQuestionsGenerator() {
                 className="mt-1 placeholder:text-sm"
               />
             </div>
+
+            <div>
+              <Label htmlFor="job-title">Job description (optional)</Label>
+              <textarea
+                id="job-description"
+                placeholder="Job description..."
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                className="mt-1 placeholder:text-sm border w-full pl-2 pt-2"
+              />
+            </div>
           </div>
 
           <Button
             className="w-full mt-6 py-6 text-lg bg-violet-600 hover:bg-violet-700"
-            onClick={generateQuestions}
+            onClick={() => generateQuestions(false)}
             disabled={isGenerating || !jobTitle}
           >
             {isGenerating ? "Generating..." : "Generate interview questions"}
@@ -216,21 +249,20 @@ export default function InterviewQuestionsGenerator() {
       </Card>
 
       {/* Display AI generated questions */}
-
       <Card>
         <CardHeader>
           <CardTitle>Your interview questions</CardTitle>
         </CardHeader>
         <CardContent>
-          {questions.length > 0 ? (
+          {displayedQuestions.length > 0 ? (
             <ul className="space-y-4">
-              {questions.map((question, index) => (
+              {displayedQuestions.map((question) => (
                 <li key={question.id} className="p-4 bg-gray-50 rounded-md flex justify-between items-center">
                   {question.text}
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => deleteQuestion(index)}
+                    onClick={() => deleteQuestion(question.id)}
                     className="text-red-500 text-right ml-auto"
                   >
                     Delete
@@ -246,11 +278,32 @@ export default function InterviewQuestionsGenerator() {
 
           {/* Buttons */}
           <div className="flex justify-between mt-4">
-            <Button onClick={generateMoreQuestions} variant="outline">
-              More
-            </Button>
-            {userId && (
-              <Button onClick={saveQuestions} variant="default" className="bg-violet-500 hover:bg-violet-300">
+            {displayedQuestions.length > 0 && (
+              <Button 
+                onClick={generateMoreQuestions} 
+                variant="outline"
+                disabled={isGenerating}
+              >
+                {isGenerating ? "Generating..." : "Generate More"}
+              </Button>
+            )}
+            
+            {hasMoreQuestionsToLoad && (
+              <Button 
+                onClick={loadMoreQuestions} 
+                variant="outline"
+                className="text-blue-600"
+              >
+                Load More Questions
+              </Button>
+            )}
+            
+            {userId && displayedQuestions.length > 0 && (
+              <Button 
+                onClick={saveQuestions} 
+                variant="default" 
+                className="bg-violet-500 hover:bg-violet-300"
+              >
                 Save
               </Button>
             )}
