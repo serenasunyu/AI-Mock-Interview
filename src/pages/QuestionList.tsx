@@ -212,7 +212,7 @@ export default function QuestionList() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <h1 className="text-3xl font-bold text-center mb-6">
+      <h1 className="text-4xl text-gray-800 font-bold text-center mb-6">
         Your Saved Questions
       </h1>
 
@@ -235,7 +235,7 @@ export default function QuestionList() {
               onChange={(e) => setNewQuestion(e.target.value)}
             />
           </div>
-          <Button onClick={handleAddQuestion} className="bg-violet-500">
+          <Button onClick={handleAddQuestion} className="bg-violet-500 hover:bg-violet-300 hover:text-black">
             Add Question
           </Button>
         </CardContent>
@@ -260,7 +260,7 @@ export default function QuestionList() {
             onClick={startMockInterview}
             disabled={selectedQuestions.length === 0}
             variant={selectedQuestions.length > 0 ? "default" : "outline"}
-            className="bg-violet-500"
+            className="bg-violet-500 hover:bg-violet-300 hover:text-black"
           >
             Start Mock Interview
           </Button>
