@@ -1,97 +1,58 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+import { CircleCheck, Star } from 'lucide-react';
 
-interface FeedbackProps {
+interface FeedbackDisplayProps {
   assessment: string;
   strengths: string[];
   improvements: string[];
-  score: number;
+  preferredAnswer?: string; // Add optional preferred answer
 }
 
-const FeedbackDisplay: React.FC<FeedbackProps> = ({ 
-  assessment, 
-  strengths, 
-  improvements, 
-  score 
-}) => {
-  // Calculate score color
-  const getScoreColor = (score: number) => {
-    if (score >= 8) return "bg-green-500 hover:bg-green-600";
-    if (score >= 6) return "bg-amber-500 hover:bg-amber-600";
-    return "bg-red-500 hover:bg-red-600";
-  };
-
-  // Format text by parsing markdown-like syntax
-  const formatText = (text: string) => {
-    // Replace ** with strong tags for bold text
-    let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    // Replace * with em tags for italic text
-    formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    
-    return formattedText;
-  };
-
+const FeedbackDisplay = ({ assessment, strengths, improvements, preferredAnswer }: FeedbackDisplayProps) => {
   return (
-    <Card className="mb-8">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-xl">Feedback Evaluation</CardTitle>
-          <Badge className={`text-white ${getScoreColor(score)}`}>
-            Score: {score}/10
-          </Badge>
-        </div>
-      </CardHeader>
+    <div className="space-y-4">
+      <div className="bg-gray-50 p-4 rounded-md">
+        <h3 className="font-medium text-muted-foreground mb-1">Feedback:</h3>
+        <p className="text-sm whitespace-pre-line">{assessment}</p>
+      </div>
       
-      <CardContent className="space-y-6">
-        {/* Overall Assessment */}
-        <div>
-          <h3 className="font-semibold text-lg mb-2">Overall Assessment</h3>
-          <div 
-            className="text-sm text-gray-700 dark:text-gray-300"
-            dangerouslySetInnerHTML={{ __html: formatText(assessment) }}
-          />
-        </div>
-        
-        <Separator />
-        
-        {/* Strengths */}
-        <div>
-          <h3 className="font-semibold text-lg mb-2 text-green-600 dark:text-green-400">
+      {strengths && strengths.length > 0 && (
+        <div className="bg-emerald-50 p-4 rounded-md">
+          <h3 className="font-medium text-emerald-700 mb-2 flex items-center">
+            <CircleCheck className="mr-2 h-5 w-5" />
             Strengths
           </h3>
-          <ul className="list-disc pl-5 space-y-2">
-            {strengths.map((strength, index) => (
-              <li 
-                key={index} 
-                className="text-sm text-gray-700 dark:text-gray-300"
-                dangerouslySetInnerHTML={{ __html: formatText(strength) }}
-              />
+          <ul className="pl-5 list-disc text-sm space-y-1">
+            {strengths.map((strength, i) => (
+              <li key={i} className="text-gray-700">{strength}</li>
             ))}
           </ul>
         </div>
-        
-        <Separator />
-        
-        {/* Areas for Improvement */}
-        <div>
-          <h3 className="font-semibold text-lg mb-2 text-amber-600 dark:text-amber-400">
+      )}
+      
+      {improvements && improvements.length > 0 && (
+        <div className="bg-amber-50 p-4 rounded-md">
+          <h3 className="font-medium text-amber-700 mb-2 flex items-center">
+            <CircleCheck className="mr-2 h-5 w-5" />
             Areas for Improvement
           </h3>
-          <ul className="list-disc pl-5 space-y-2">
-            {improvements.map((improvement, index) => (
-              <li 
-                key={index} 
-                className="text-sm text-gray-700 dark:text-gray-300"
-                dangerouslySetInnerHTML={{ __html: formatText(improvement) }}
-              />
+          <ul className="pl-5 list-disc text-sm space-y-1">
+            {improvements.map((improvement, i) => (
+              <li key={i} className="text-gray-700">{improvement}</li>
             ))}
           </ul>
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      {preferredAnswer && (
+        <div className="bg-blue-50 p-4 rounded-md">
+          <h3 className="font-medium text-blue-700 mb-2 flex items-center">
+            <Star className="mr-2 h-5 w-5" />
+            AI Answer
+          </h3>
+          <p className="text-sm whitespace-pre-line text-gray-700">{preferredAnswer}</p>
+        </div>
+      )}    
+      </div>
   );
 };
 

@@ -21,6 +21,10 @@ export interface Interview {
     questions: { question: string; answer: string } [];
     createdAt: Timestamp;
     updatedAt: Timestamp;
+    jobTitle?: string;
+    duration: string;
+    difficulty: number;
+    rating: number;
 };
 
 // user answers
@@ -54,4 +58,18 @@ export interface FeedbackQuestion {
     text: string;
     startTime: number;
     endTime: number;
+  };
+
+  export interface FeedbackItem {
+    id?: string;
+    questionId?: string;
+    question: string;
+    transcript?: string;
+    user_ans?: string;
+    correct_ans?: string;
+    feedback: string;
+    strengths?: string[];
+    improvements?: string[];
+    score?: number;
+    rating?: number;
   };

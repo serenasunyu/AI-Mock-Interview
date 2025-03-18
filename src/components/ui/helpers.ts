@@ -1,30 +1,26 @@
 const MainRoutes = [
+    // {
+    //     label: "Home",
+    //     href: "/",
+    // },
     {
-    label: "Home",
-    href: "/",
+        label: "Question Generator",
+        href: "/questions",
     },
     {
-    label: "Question Generator",
-    href: "/questions",
-    children: [
-        {
-            label: "Generate Questions",
-            href: "/questions",
-          },
-        {
-          label: "Question List",
-          href: "/questions/question-list",
-        },
-        {
-          label: "Mock Interview",
-          href: "/questions/mock-interview",
-        },
-        {
-          label: "Feedback",
-          href: "/questions/mock-interview/feedback",
-        }
-      ]
+        label: "Question List",
+        href: "/question-list",
     },
+    {
+        label: "AI Mock Interview",
+        href: "/mock-interview",
+    },
+    {
+        label: "Feedback",
+        href: "/mock-interview/feedback",
+    }
+
+    
 ];
 
 export default MainRoutes;

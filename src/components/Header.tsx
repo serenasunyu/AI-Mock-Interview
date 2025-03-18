@@ -1,14 +1,14 @@
 import { cn } from "@/lib/utils";
-import { useAuth } from "@clerk/clerk-react";
+// import { useAuth } from "@clerk/clerk-react";
 import Container from "./Container";
 import LogoContainer from "./LogoContainer";
 import NavigationRoutes from "./NavigationRoutes";
-import { NavLink } from "react-router-dom";
+// import { NavLink } from "react-router-dom";
 import ProfileContainer from "./ProfileContainer";
 import ToggleContainer from "./ToggleContainer";
 
 const Header = () => {
-  const { userId } = useAuth();
+  // const { userId } = useAuth();
 
   return (
     <div
@@ -23,7 +23,7 @@ const Header = () => {
           <nav className="hidden md:flex items-center gap-3">
           <NavigationRoutes />
 
-          {userId && (
+          {/* {userId && (
             <NavLink
               to="/generate"
               className={({ isActive }) =>
@@ -32,7 +32,7 @@ const Header = () => {
             >
               Mock Interview
             </NavLink>
-          )}
+          )} */}
           </nav>
 
           {/* profile section */}

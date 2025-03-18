@@ -1,4 +1,3 @@
-// lib/ai-service.ts
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Define interface for the request to the AI service
@@ -20,9 +19,10 @@ interface AIFeedbackRequest {
 // Define interface for the response from the AI service
 interface AIFeedbackResponse {
   feedback: string;
-  strengths: string[]; // Non-optional to match FeedbackItem
-  improvements: string[]; // Non-optional to match FeedbackItem
-  score: number; // Non-optional to match FeedbackItem
+  strengths: string[]; 
+  improvements: string[];
+  score: number;
+  preferredAnswer?: string; // Added preferred answer field
 }
 
 // Function to generate feedback using Gemini AI
@@ -35,7 +35,7 @@ export async function generateAIFeedback(request: AIFeedbackRequest): Promise<AI
     }
     
     const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
     // Build the appropriate prompt based on whether this is overall feedback or specific question feedback
     let prompt = "";
@@ -46,16 +46,18 @@ export async function generateAIFeedback(request: AIFeedbackRequest): Promise<AI
         `Question ${index + 1}: ${item.question}\nAnswer: ${item.transcript}\n`
       ).join('\n');
       
-      prompt = `Please provide overall feedback for a mock interview for a ${request.jobTitle} position. 
-                Here are all the questions and answers:
-                
-                ${questionsAndAnswers}
-                
-                Give comprehensive feedback on the entire interview performance, highlighting patterns, 
-                overall strengths and weaknesses, and concrete suggestions for improvement.`;
+      prompt = `
+           Please provide a brief overall feedback for a mock interview for a ${request.jobTitle} position.
+            
+            Here are the questions and answers:
+            
+            ${questionsAndAnswers}
+            
+            Summarize the candidate's performance in 3-4 sentences, highlighting key strengths and areas for improvement.
+            Keep the response concise and to the point.
+            `;
                 
       // For overall feedback, return with empty arrays for strengths/improvements and 0 for score
-      // to match the non-optional type requirements
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const content = response.text();
@@ -68,49 +70,78 @@ export async function generateAIFeedback(request: AIFeedbackRequest): Promise<AI
       };
     } else if (request.question && request.transcript) {
       // Create a prompt for specific question feedback
-      prompt = `Please evaluate this answer for a ${request.jobTitle} interview:
-                
-                Question: ${request.question}
-                
-                Answer: ${request.transcript}
-                
-                Provide detailed feedback on the response including:
-                1. Overall assessment
-                2. 2-3 specific strengths
-                3. 2-3 areas for improvement with actionable suggestions
-                4. A score from 1-10`;
+      prompt = `
+            Question: "${request.question}"
+            User Response: "${request.transcript}"
+            Interview Context: "${request.jobTitle}"
+            
+            Please analyze the user's response for this mock interview question. 
+            Ensure the answer does not include asterisks (*) or unnecessary symbols.
+
+            Format your response exactly as follows:
+            
+            Feedback: A brief overall assessment of the response.
+            
+            Strengths:
+            • [First strength]
+            • [Second strength]
+            • [Optional third strength]
+            
+            Improvements:
+            • [First area for improvement with actionable suggestion]
+            • [Second area for improvement with actionable suggestion]
+            • [Optional third area for improvement]
+            
+            Preferred Answer:
+            [Write a model answer that would be considered excellent for this interview question. Keep it concise but comprehensive, demonstrating key points that should be addressed.]
+            
+            Score: [number between 1-10]
+
+            Ensure the feedback is constructive and specific to help the user refine their interview skills.
+            `;
+            
+      // Generate content using Gemini
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const content = response.text();
+      
+      // Process the response for specific question feedback with improved parsing
+      const feedbackMatch = content.match(/Feedback:(.*?)(?=Strengths:|$)/s);
+      const strengthsMatch = content.match(/Strengths:(.*?)(?=Improvements:|$)/s);
+      const improvementsMatch = content.match(/Improvements:(.*?)(?=Preferred Answer:|$)/s);
+      const preferredAnswerMatch = content.match(/Preferred Answer:(.*?)(?=Score:|$)/s);
+      const scoreMatch = content.match(/Score:.*?(\d+)/);
+      
+      // Extract and clean the feedback text
+      const feedback = feedbackMatch 
+        ? feedbackMatch[1].trim() 
+        : "No feedback provided.";
+      
+      // Function to parse bullet points
+      const parseBulletPoints = (text: string | null): string[] => {
+        if (!text) return [];
+        
+        return text
+          .split('•')
+          .map(item => item.replace(/\*/g, '').trim())
+          .filter(item => item.length > 0);
+      };
+      
+      const strengths = parseBulletPoints(strengthsMatch ? strengthsMatch[1] : null);
+      const improvements = parseBulletPoints(improvementsMatch ? improvementsMatch[1] : null);
+      const preferredAnswer = preferredAnswerMatch ? preferredAnswerMatch[1].trim() : "";
+      const score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
+      
+      return {
+        feedback,
+        strengths,
+        improvements,
+        score,
+        preferredAnswer
+      };
     } else {
       throw new Error('Invalid request parameters');
     }
-
-    // Generate content using Gemini
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const content = response.text();
-    
-    // Process the response for specific question feedback
-    // This is simplified parsing - you might want more robust parsing logic
-    const strengthsMatch = content.match(/Strengths:(.*?)(?=Areas for improvement:|$)/s);
-    const improvementsMatch = content.match(/Areas for improvement:(.*?)(?=Score:|$)/s);
-    const scoreMatch = content.match(/Score:.*?(\d+)/);
-    
-    const strengths = strengthsMatch 
-      ? strengthsMatch[1].split(/\d+\./).filter(s => s.trim()).map(s => s.trim())
-      : [];
-    
-    const improvements = improvementsMatch
-      ? improvementsMatch[1].split(/\d+\./).filter(s => s.trim()).map(s => s.trim())
-      : [];
-    
-    const score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
-    
-    return {
-      feedback: content.split('Strengths:')[0].trim(),
-      strengths: strengths,
-      improvements: improvements,
-      score: score
-    };
-    
   } catch (error) {
     console.error('Error generating AI feedback:', error);
     // Return default values to match the non-optional type requirements

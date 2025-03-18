@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { collection, getDocs, addDoc, Timestamp } from "firebase/firestore";
+import { collection, getDocs, addDoc, Timestamp, doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/config/firebase.config";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +8,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Trash2, XCircle } from "lucide-react";
+// Import Sonner for toast notifications
+import { toast, Toaster } from "sonner";
 
 interface SavedQuestion {
   id: string;
@@ -26,6 +29,44 @@ interface QuestionItem {
 
 type SortOption = "newest" | "oldest" | "jobTitle";
 
+// Custom hook for confirmation
+function useConfirmation() {
+  const [state, setState] = useState<{
+    isOpen: boolean;
+    onConfirm?: () => void;
+    title: string;
+    description: string;
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+  });
+
+  const confirm = (title: string, description: string) => {
+    return new Promise<boolean>((resolve) => {
+      setState({
+        isOpen: true,
+        onConfirm: () => {
+          resolve(true);
+          setState({ ...state, isOpen: false });
+        },
+        title,
+        description,
+      });
+    });
+  };
+
+  const handleCancel = () => {
+    setState({ ...state, isOpen: false });
+  };
+
+  return {
+    state,
+    confirm,
+    handleCancel
+  };
+}
+
 export default function QuestionList() {
   const [savedQuestions, setSavedQuestions] = useState<SavedQuestion[]>([]);
   const [filteredQuestions, setFilteredQuestions] = useState<SavedQuestion[]>([]);
@@ -38,6 +79,9 @@ export default function QuestionList() {
   const [selectedQuestions, setSelectedQuestions] = useState<QuestionItem[]>([]);
   const [newQuestion, setNewQuestion] = useState<string>("");
   const [newJobTitle, setNewJobTitle] = useState<string>("");
+  
+  // Delete confirmation state using custom confirmation hook
+  const confirmation = useConfirmation();
 
   useEffect(() => {
     if (fetched.current) return;
@@ -159,7 +203,9 @@ export default function QuestionList() {
 
   const startMockInterview = () => {
     if (selectedQuestions.length === 0) {
-      alert("Please select at least one question for your mock interview.");
+      toast.error("No questions selected", {
+        description: "Please select at least one question for your mock interview."
+      });
       return;
     }
 
@@ -167,7 +213,7 @@ export default function QuestionList() {
     sessionStorage.setItem('mockInterviewQuestions', JSON.stringify(selectedQuestions));
 
     // Navigate to the mock interview page
-    navigate('/questions/mock-interview');
+    navigate('/mock-interview');
   };
 
   const clearSelection = () => {
@@ -177,41 +223,165 @@ export default function QuestionList() {
   // Handle adding a new question
   const handleAddQuestion = async () => {
     if (!newQuestion || !newJobTitle) {
-      alert("Please provide both a job title and a question.");
+      toast.error("Missing information", {
+        description: "Please provide both a job title and a question."
+      });
       return;
     }
 
-    // Add the new question to Firestore
-    const newQuestions = [...savedQuestions];
-    const existingJobTitle = newQuestions.find(item => item.jobTitle === newJobTitle);
-
-    if (existingJobTitle) {
-      existingJobTitle.questions.push(newQuestion); // Add the question to an existing job title
-    } else {
-      newQuestions.push({
-        id: new Date().toISOString(),
+    try {
+      // Add to Firestore first to get the real document ID
+      const docRef = await addDoc(collection(db, "interviewQuestions"), {
         jobTitle: newJobTitle,
         questions: [newQuestion],
         timestamp: Timestamp.now(),
       });
+
+      // Then update the local state with the real document ID
+      const newEntry: SavedQuestion = {
+        id: docRef.id,
+        jobTitle: newJobTitle,
+        questions: [newQuestion],
+        timestamp: Timestamp.now(),
+      };
+
+      setSavedQuestions(prev => [...prev, newEntry]);
+
+      // Update job titles list if needed
+      if (!uniqueJobTitles.includes(newJobTitle)) {
+        setUniqueJobTitles(prev => [...prev, newJobTitle]);
+      }
+
+      // Clear inputs after submission
+      setNewQuestion("");
+      setNewJobTitle("");
+
+      toast.success("Question added", {
+        description: "Your new question has been saved successfully."
+      });
+    } catch (error) {
+      console.error("Error adding question:", error);
+      toast.error("Error", {
+        description: "Failed to add your question. Please try again."
+      });
     }
+  };
 
-    setSavedQuestions(newQuestions);
+  // Handle deleting a question with confirmation
+  const openDeleteConfirmation = async (type: "question" | "section", entryId: string, questionIndex?: number, jobTitle?: string) => {
+    const title = type === "question" ? "Delete Question" : "Delete Job Title Section";
+    const description = type === "question" 
+      ? "Are you sure you want to delete this question? This action cannot be undone."
+      : `Are you sure you want to delete the entire "${jobTitle}" section and all its questions? This action cannot be undone.`;
+    
+    const confirmed = await confirmation.confirm(title, description);
+    
+    if (confirmed) {
+      try {
+        if (type === "question" && questionIndex !== undefined) {
+          // Find the entry
+          const entry = savedQuestions.find(q => q.id === entryId);
+          if (!entry) {
+            throw new Error("Question not found");
+          }
 
-    // Add to Firestore
-    await addDoc(collection(db, "interviewQuestions"), {
-      jobTitle: newJobTitle,
-      questions: [newQuestion],
-      timestamp: Timestamp.now(),
-    });
+          // Remove the question from the array
+          const updatedQuestions = [...entry.questions];
+          updatedQuestions.splice(questionIndex, 1);
 
-    // Clear inputs after submission
-    setNewQuestion("");
-    setNewJobTitle("");
+          if (updatedQuestions.length === 0) {
+            // Delete the entire document if no questions remain
+            await deleteDoc(doc(db, "interviewQuestions", entryId));
+            
+            // Update local state
+            setSavedQuestions(prev => prev.filter(q => q.id !== entryId));
+            
+            // Remove from selected questions if needed
+            setSelectedQuestions(prev => 
+              prev.filter(item => item.entryId !== entryId)
+            );
+
+            // Update job titles list if needed
+            const jobTitleStillExists = savedQuestions.some(q => 
+              q.id !== entryId && q.jobTitle === entry.jobTitle
+            );
+            
+            if (!jobTitleStillExists) {
+              setUniqueJobTitles(prev => prev.filter(title => title !== entry.jobTitle));
+            }
+
+            toast.success("Section deleted", {
+              description: `"${entry.jobTitle}" section has been deleted as it had no remaining questions.`
+            });
+          } else {
+            // Update the document with the remaining questions
+            await updateDoc(doc(db, "interviewQuestions", entryId), {
+              questions: updatedQuestions
+            });
+            
+            // Update local state
+            setSavedQuestions(prev => 
+              prev.map(q => 
+                q.id === entryId 
+                  ? { ...q, questions: updatedQuestions } 
+                  : q
+              )
+            );
+            
+            // Remove from selected questions if needed
+            const questionId = `${entryId}-${questionIndex}`;
+            setSelectedQuestions(prev => 
+              prev.filter(item => item.id !== questionId)
+            );
+
+            toast.success("Question deleted", {
+              description: "The question has been deleted successfully."
+            });
+          }
+        } else if (type === "section") {
+          // Delete the entire document
+          await deleteDoc(doc(db, "interviewQuestions", entryId));
+          
+          // Find the entry to get the job title
+          const entry = savedQuestions.find(q => q.id === entryId);
+          
+          // Update local state
+          setSavedQuestions(prev => prev.filter(q => q.id !== entryId));
+          
+          // Remove from selected questions if needed
+          setSelectedQuestions(prev => 
+            prev.filter(item => item.entryId !== entryId)
+          );
+
+          // Update job titles list if needed
+          if (entry) {
+            const jobTitleStillExists = savedQuestions.some(q => 
+              q.id !== entryId && q.jobTitle === entry.jobTitle
+            );
+            
+            if (!jobTitleStillExists) {
+              setUniqueJobTitles(prev => prev.filter(title => title !== entry.jobTitle));
+            }
+          }
+
+          toast.success("Section deleted", {
+            description: entry ? `"${entry.jobTitle}" section has been deleted successfully.` : "Section has been deleted successfully."
+          });
+        }
+      } catch (error) {
+        console.error("Error deleting:", error);
+        toast.error("Error", {
+          description: "Failed to delete. Please try again."
+        });
+      }
+    }
   };
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
+      {/* Sonner Toaster component */}
+      <Toaster position="top-right" />
+      
       <h1 className="text-4xl text-gray-800 font-bold text-center mb-6">
         Your Saved Questions
       </h1>
@@ -303,9 +473,20 @@ export default function QuestionList() {
             <CardContent className="p-4">
               <div className="flex justify-between mb-2">
                 <h2 className="text-xl font-semibold text-gray-700">{entry.jobTitle}</h2>
-                <span className="text-sm text-gray-500 self-center">
-                  {new Date(entry.timestamp.toDate()).toLocaleDateString()}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">
+                    {new Date(entry.timestamp.toDate()).toLocaleDateString()}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                    onClick={() => openDeleteConfirmation("section", entry.id, undefined, entry.jobTitle)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete section</span>
+                  </Button>
+                </div>
               </div>
               
               {/* Select All row */}
@@ -332,7 +513,7 @@ export default function QuestionList() {
               {/* Questions list */}
               <div className="space-y-2 mt-3">
                 {entry.questions.map((q, index) => (
-                  <div key={index} className="flex items-start">
+                  <div key={index} className="flex items-start group">
                     <Checkbox 
                       id={`q-${entry.id}-${index}`}
                       checked={isQuestionSelected(entry.id, index)}
@@ -341,10 +522,19 @@ export default function QuestionList() {
                     />
                     <Label 
                       htmlFor={`q-${entry.id}-${index}`}
-                      className={`${isQuestionSelected(entry.id, index) ? 'text-primary font-medium' : ''} cursor-pointer`}
+                      className={`${isQuestionSelected(entry.id, index) ? 'text-primary font-medium' : ''} cursor-pointer flex-grow`}
                     >
                       {q}
                     </Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/90 hover:bg-destructive/10 transition-opacity"
+                      onClick={() => openDeleteConfirmation("question", entry.id, index)}
+                    >
+                      <XCircle className="h-4 w-4" />
+                      <span className="sr-only">Delete question</span>
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -360,6 +550,30 @@ export default function QuestionList() {
             }
           </AlertDescription>
         </Alert>
+      )}
+
+      {/* Custom Confirmation Dialog */}
+      {confirmation.state.isOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-medium mb-2">{confirmation.state.title}</h3>
+            <p className="text-gray-600 mb-6">{confirmation.state.description}</p>
+            <div className="flex justify-end space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={confirmation.handleCancel}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={() => confirmation.state.onConfirm && confirmation.state.onConfirm()}
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

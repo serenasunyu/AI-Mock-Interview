@@ -38,7 +38,7 @@ export default function InterviewQuestionsGenerator() {
   const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
   const genAI = new GoogleGenerativeAI(API_KEY);
   const { userId } = useAuth();
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const isSaving = useRef(false);
 
   // Generate AI interview questions
@@ -50,8 +50,10 @@ export default function InterviewQuestionsGenerator() {
     const prompt = `Generate 10 interview questions based on the ${type} for a ${jobTitle} at ${
       experienceLevel || "any"
     } level in the ${industry || "general"} industry.${
-      jobDescription ? ` Consider the following job description: "${jobDescription}".` : ""
-    } Only output the 10 questions as a numbered list without any additional text.`;    
+      jobDescription
+        ? ` Consider the following job description: "${jobDescription}".`
+        : ""
+    } Only output the 10 questions as a numbered list without any additional text.`;
 
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -71,7 +73,7 @@ export default function InterviewQuestionsGenerator() {
         // Append new questions to existing ones
         const updatedQuestions = [...allQuestions, ...generatedQuestions];
         setAllQuestions(updatedQuestions);
-        
+
         // Update displayed questions
         updateDisplayedQuestions(updatedQuestions, currentPage);
       } else {
@@ -80,7 +82,7 @@ export default function InterviewQuestionsGenerator() {
         setDisplayedQuestions(generatedQuestions.slice(0, questionsPerPage));
         setCurrentPage(1);
       }
-      
+
       setIsGenerating(false);
     } catch (error) {
       console.error("Error generating questions: ", error);
@@ -104,7 +106,7 @@ export default function InterviewQuestionsGenerator() {
 
   // Delete a question by index
   const deleteQuestion = (id: number) => {
-    const updatedQuestions = allQuestions.filter(q => q.id !== id);
+    const updatedQuestions = allQuestions.filter((q) => q.id !== id);
     setAllQuestions(updatedQuestions);
     updateDisplayedQuestions(updatedQuestions, currentPage);
   };
@@ -131,7 +133,7 @@ export default function InterviewQuestionsGenerator() {
       });
       alert("Questions saved successfully!");
       console.log("Questions saved with ID:", docRef.id);
-      navigate("/questions/question-list");
+      navigate("/question-list");
     } catch (error) {
       console.error("Error saving questions: ", error);
     } finally {
@@ -140,7 +142,8 @@ export default function InterviewQuestionsGenerator() {
   };
 
   // Check if there are more questions to load
-  const hasMoreQuestionsToLoad = allQuestions.length > currentPage * questionsPerPage;
+  const hasMoreQuestionsToLoad =
+    allQuestions.length > currentPage * questionsPerPage;
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
@@ -239,7 +242,7 @@ export default function InterviewQuestionsGenerator() {
           </div>
 
           <Button
-            className="w-full mt-6 py-6 text-lg bg-violet-600 hover:bg-violet-700"
+            className="w-full mt-6 py-6 text-lg bg-violet-500 hover:bg-violet-300 hover:text-black"
             onClick={() => generateQuestions(false)}
             disabled={isGenerating || !jobTitle}
           >
@@ -257,7 +260,10 @@ export default function InterviewQuestionsGenerator() {
           {displayedQuestions.length > 0 ? (
             <ul className="space-y-4">
               {displayedQuestions.map((question) => (
-                <li key={question.id} className="p-4 bg-gray-50 rounded-md flex justify-between items-center">
+                <li
+                  key={question.id}
+                  className="p-4 bg-gray-50 rounded-md flex justify-between items-center"
+                >
                   {question.text}
                   <Button
                     variant="outline"
@@ -279,32 +285,60 @@ export default function InterviewQuestionsGenerator() {
           {/* Buttons */}
           <div className="flex justify-between mt-4">
             {displayedQuestions.length > 0 && (
-              <Button 
-                onClick={generateMoreQuestions} 
+              <Button
+                onClick={generateMoreQuestions}
                 variant="outline"
                 disabled={isGenerating}
               >
                 {isGenerating ? "Generating..." : "Generate More"}
               </Button>
             )}
-            
+
             {hasMoreQuestionsToLoad && (
-              <Button 
-                onClick={loadMoreQuestions} 
+              <Button
+                onClick={loadMoreQuestions}
                 variant="outline"
                 className="text-blue-600"
               >
                 Load More Questions
               </Button>
             )}
-            
+
             {userId && displayedQuestions.length > 0 && (
-              <Button 
-                onClick={saveQuestions} 
-                variant="default" 
+              <Button
+                onClick={saveQuestions}
+                variant="default"
                 className="bg-violet-500 hover:bg-violet-300 hover:text-black"
               >
                 Save
+              </Button>
+            )}
+
+            {/* New Copy button for non-logged in users */}
+            {!userId && displayedQuestions.length > 0 && (
+              <Button
+                onClick={() => {
+                  // Create a formatted string of all questions
+                  const questionsText = displayedQuestions
+                    .map((question, index) => `${index + 1}. ${question.text}`)
+                    .join("\n\n");
+
+                  // Copy to clipboard
+                  navigator.clipboard
+                    .writeText(questionsText)
+                    .then(() => {
+                      alert("Questions copied to clipboard!");
+                      // You can replace with toast notification if you have a toast library
+                    })
+                    .catch((err) => {
+                      console.error("Failed to copy questions: ", err);
+                      alert("Failed to copy questions. Please try again.");
+                    });
+                }}
+                variant="default"
+                className="bg-violet-500 hover:bg-violet-300 hover:text-black"
+              >
+                Copy Questions
               </Button>
             )}
           </div>

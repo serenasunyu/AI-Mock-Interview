@@ -45,6 +45,8 @@ export default function MockInterview() {
   const [transcriptions, setTranscriptions] = useState<TranscriptionData[]>([]);
   const [currentTranscript, setCurrentTranscript] = useState("");
 
+  const [interviewId, setInterviewId] = useState<string | null>(null);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const timerRef = useRef<number | null>(null);
@@ -79,7 +81,7 @@ export default function MockInterview() {
         setCurrentTranscript(transcript);
       }
     }
-  }, [results]);
+  }, [results, currentTranscript]);
 
   useEffect(() => {
     // Load selected questions from session storage
@@ -166,6 +168,11 @@ export default function MockInterview() {
 
   const saveTranscription = () => {
     const currentQuestion = questions[currentQuestionIndex];
+
+    // Only save if there's actual content
+    if (!currentTranscript.trim()) {
+      return;
+    }
     
     // Create a new transcription entry
     const transcriptionData: TranscriptionData = {
@@ -192,7 +199,11 @@ export default function MockInterview() {
       setIsTranscribing(true);
       
       // Generate a unique interview ID
-      const interviewId = `interview_${Date.now()}`;
+      // const interviewId = `interview_${Date.now()}`;
+
+      // Guarantee interviewId is a string before proceeding
+    const interviewId = `interview_${Date.now()}`;
+    setInterviewId(interviewId);
       
       // Save each transcription with progress updates
       for (let i = 0; i < transcriptions.length; i++) {
@@ -340,7 +351,7 @@ export default function MockInterview() {
     stopCameraAndCleanup();
     
     // Navigate to feedback page
-    navigate("/questions/mock-interview/feedback");
+    navigate(`/mock-interview/feedback/${interviewId}`);
   };
 
   const discardRecording = () => {
@@ -392,7 +403,7 @@ export default function MockInterview() {
     if (isSpeechRecording) {
       stopSpeechToText();
     }
-    navigate("/questions/question-list");
+    navigate("/question-list");
   };
 
   // If no questions loaded yet, show loading
@@ -417,7 +428,7 @@ export default function MockInterview() {
           <span className="font-medium">
             Question {currentQuestionIndex + 1} of {questions.length}
           </span>
-          <Button variant="outline" onClick={exitInterview}>
+          <Button variant="outline" onClick={exitInterview} className="bg-gray-100 hover:bg-gray-200">
             Exit
           </Button>
         </div>
@@ -442,7 +453,7 @@ export default function MockInterview() {
                 >
                   Previous
                 </Button>
-                <Button onClick={nextQuestion}>
+                <Button onClick={nextQuestion} className="bg-violet-500 hover:bg-violet-300 hover:text-black">
                   {isLastQuestion ? "Finish Interview" : "Next Question"}
                 </Button>
               </div>
@@ -509,7 +520,7 @@ export default function MockInterview() {
           <div className="bg-gray-300 rounded-lg overflow-hidden aspect-video relative">
             {!videoStream ? (
               <div className="absolute inset-0 flex items-center justify-center">
-                <Button onClick={startCamera} variant="default">
+                <Button onClick={startCamera} variant="default" className="bg-violet-500 hover:bg-violet-300 hover:text-black">
                   Start Camera
                 </Button>
               </div>

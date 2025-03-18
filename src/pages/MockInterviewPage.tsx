@@ -12,41 +12,46 @@ import QuestionSection from "@/components/QuestionSection";
 const MockInterviewPage = () => {
   const { interviewId } = useParams<{ interviewId: string }>();
   const [interview, setInterview] = useState<Interview | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    setIsLoading(true);
+    // Handle missing interviewId
+    if (!interviewId) {
+      navigate("/generate", { replace: true });
+      return;
+    }
+
     const fetchInterview = async () => {
-      if (interviewId) {
-        try {
-          const interviewDoc = await getDoc(doc(db, "interviews", interviewId));
-          if (interviewDoc.exists()) {
-            setInterview({
-              id: interviewDoc.id,
-              ...interviewDoc.data(),
-            } as Interview);
-          }
-        } catch (error) {
-          console.log(error);
-        } finally {
-          setIsLoading(false);
+      try {
+        const interviewDoc = await getDoc(doc(db, "interviews", interviewId));
+        if (interviewDoc.exists()) {
+          setInterview({
+            id: interviewDoc.id,
+            ...interviewDoc.data(),
+          } as Interview);
+        } else {
+          // Handle case where interview doesn't exist
+          navigate("/generate", { replace: true });
         }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading(false);
       }
     };
+
     fetchInterview();
   }, [interviewId, navigate]);
 
+  // Show loader while data is being fetched
   if (isLoading) {
     return <LoaderPage className="w-full h-[70vh]" />;
   }
 
-  if (!interviewId) {
-    navigate("/generate", { replace: true });
-  }
-
+  // If interview is null after loading is complete, this means it wasn't found
   if (!interview) {
-    navigate("/generate", { replace: true });
+    return null; // Return null to prevent rendering while redirect happens
   }
 
   return (
@@ -55,18 +60,18 @@ const MockInterviewPage = () => {
         breadCrumbPage="Start"
         breadCrumbItems={[
           {label: "Mock Interviews", link: "/generate"},
-          {label: interview?.position || "", link: `/generate/interview/${interview?.id}`,}
+          {label: interview.position || "", link: `/generate/interview/${interview.id}`}
         ]}
       />
 
-        <div className="w-full">
-          <Alert className="bg-sky-100 border border-sky-200 p-4 rounded-lg flex items-start gap-3">
-            <Lightbulb className="h-5 w-5 text-sky-600" />
-            <div>
-              <AlertTitle className="text-sky-800 font-semibold">
-                Important Note
-              </AlertTitle>
-              <AlertDescription className="text-sm text-sky-700 mt-1 leading-relaxed">
+      <div className="w-full">
+        <Alert className="bg-sky-100 border border-sky-200 p-4 rounded-lg flex items-start gap-3">
+          <Lightbulb className="h-5 w-5 text-sky-600" />
+          <div>
+            <AlertTitle className="text-sky-800 font-semibold">
+              Important Note
+            </AlertTitle>
+            <AlertDescription className="text-sm text-sky-700 mt-1 leading-relaxed">
               Press "Record Answer" to begin answering the question. Once you
               finish the interview, you&apos;ll receive feedback comparing your
               responses with the ideal answers.
@@ -75,17 +80,16 @@ const MockInterviewPage = () => {
               <strong>Note:</strong>{" "}
               <span className="font-medium">Your video is never recorded.</span>{" "}
               You can disable the webcam anytime if preferred.
-              </AlertDescription>
-            </div>
-          </Alert>
-        </div>
-
-        {interview ?.questions && interview?.questions.length > 0 && (
-          <div className="mt-4 w-full flex flex-col items-start gap-4">
-            <QuestionSection questions={interview?.questions} position={interview?.position} />
+            </AlertDescription>
           </div>
-        )}
+        </Alert>
+      </div>
 
+      {interview.questions && interview.questions.length > 0 && (
+        <div className="mt-4 w-full flex flex-col items-start gap-4">
+          <QuestionSection questions={interview.questions} position={interview.position} />
+        </div>
+      )}
     </div>
   );
 };
