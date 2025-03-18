@@ -6,7 +6,7 @@ import { Outlet } from "react-router-dom";
 
 const PublicLayout = () => {
   return (
-    <div className="w-full">
+    <div className="w-full bg-gray-50">
         {/* handler to store the user data*/}
         <AuthHandler />
         

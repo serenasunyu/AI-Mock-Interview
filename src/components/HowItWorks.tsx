@@ -18,28 +18,35 @@ const steps: StepType[] = [
     id: 1,
     title: "Type Your Interview Details",
     description:
-      "Fill the job title, job description, and tech stack to customize your interview questions.",
+      "Fill the job title, experience level, type of interview and job description to customize your interview questions.",
     icon: "📝",
   },
   {
     id: 2,
-    title: "Practice with AI Interviewer",
-    description: "Answer AI-driven questions in a real interview setting.",
-    icon: "🤖",
+    title: "Select Your Questions",
+    description: "Go to the question list and choose the questions you want to practice.",
+    icon: "✅",
   },
   {
     id: 3,
+    title: "Practice Interview with Recording",
+    description: "Answer AI-driven questions while being recorded, simulating a real interview setting.",
+    icon: "🎤",
+  },
+  {
+    id: 4,
     title: "Get Detailed Feedback",
     description: "Receive AI-generated insights to improve your responses.",
     icon: "📊",
   },
   {
-    id: 4,
+    id: 5,
     title: "Track Your Progress",
     description: "Monitor your performance and enhance your skills over time.",
     icon: "📈",
   },
 ];
+
 
 const DecorativeEffect: FC = () => {
   return (
@@ -119,7 +126,7 @@ const Step: FC<StepProps> = ({ step, progress }) => {
   const ref = useRef<HTMLDivElement>(null);
 
   return (
-    <div ref={ref} className="mb-14 relative">
+    <div ref={ref} className="mb-8 relative">
       {/* Timeline line */}
       <div className="absolute left-0 top-0 bottom-0 w-1 bg-gray-200" />
 

@@ -8,7 +8,7 @@ const MainLayout = () => {
   return (
     <div className="flex flex-col h-screen">
         <Header />
-        <Container className="flex-grow">
+        <Container className="flex-grow bg-gray-50">
             <main className="flex-grow">
             <Outlet />
             </main>
