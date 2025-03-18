@@ -88,7 +88,7 @@ export default function MockInterview() {
     const savedQuestions = sessionStorage.getItem("mockInterviewQuestions");
     if (!savedQuestions) {
       alert("No questions selected for mock interview");
-      navigate("/questions/question-list");
+      navigate("/question-list");
       return;
     }
 
