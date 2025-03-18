@@ -185,7 +185,7 @@ const Home = () => {
           <h1 className="font-extrabold text-4xl text-center text-gray-800">
             Ready to Land Your Dream Job?
           </h1>
-          <Link to="/generate">
+          <Link to="/questions">
           <Button className="bg-indigo-500 mt-4 font-bold hover:bg-indigo-300 hover:text-black">
             Start Free Practice
           </Button>
