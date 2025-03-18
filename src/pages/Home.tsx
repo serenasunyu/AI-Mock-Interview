@@ -28,7 +28,7 @@ const Home = () => {
 
             <div className="flex gap-4 mt-15 items-center justify-center">
               <Link
-                to="/generate"
+                to="/questions"
                 className="hover:text-black text-white"
               >
                 <Button className="w-40 h-10 bg-indigo-500 hover:bg-indigo-300 hover:text-black">
