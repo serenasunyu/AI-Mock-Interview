@@ -71,7 +71,7 @@ const Home = () => {
           </div> */}
 
           <div className="w-full mt-4 md:w-1/2 rounded-xl bg-gray-100 h-[420px] drop-shadow-md overflow-hidden relative">
-            <video
+            {/* <video
               src="/assets/video/hero-video.mp4"
               // alt="hero video"
               className="w-full h-full object-cover"
@@ -82,6 +82,13 @@ const Home = () => {
             />
 
             <div className="absolute top-4 left-4 px-4 py-2 rounded-md bg-white/40 backdrop-blur-md">
+              MockMate&copy;
+            </div> */}
+            <img 
+              src="/assets/img/hero.webp"
+              alt="hero"
+            />
+            <div className="absolute top-4 right-4 px-4 py-2 rounded-md bg-white/40 backdrop-blur-md">
               MockMate&copy;
             </div>
 
