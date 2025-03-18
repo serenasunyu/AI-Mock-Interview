@@ -72,7 +72,7 @@ const Home = () => {
 
           <div className="w-full mt-4 md:w-1/2 rounded-xl bg-gray-100 h-[420px] drop-shadow-md overflow-hidden relative">
             <video
-              src="src/assets/video/hero-video.mp4"
+              src="/assets/video/hero-video.mp4"
               // alt="hero video"
               className="w-full h-full object-cover"
               autoPlay
@@ -139,31 +139,31 @@ const Home = () => {
         <Marquee gradient={false} speed={50} pauseOnHover className="gap-5">
           <div className="flex flex-wrap justify-center gap-5">
             <ReviewCard
-              image="src/assets/img/Sarah.png"
+              image="/assets/img/Sarah.png"
               name="Sarah Johnson"
               role="Software Engineer at Google"
               review="MockMate helped me prepare for my technical interviews effectively. The AI feedback was spot on!"
             />
             <ReviewCard
-              image="src/assets/img/Micheal.png"
+              image="/assets/img/Micheal.png"
               name="Micheal Chen"
               role="Product Manager at Microsoft"
               review="The practice sessions were incredibly realistic. I felt well-prepared for my actual interviews."
             />
             <ReviewCard
-              image="src/assets/img/Emily.png"
+              image="/assets/img/Emily.png"
               name="Emily Rodriguez"
               role="UX Designer at Apple"
               review="Thanks to MockMate, I gained the confidence I needed to ace my dream job interview."
             />
             <ReviewCard
-              image="src/assets/img/david.png"
+              image="/assets/img/david.png"
               name="David Lee"
               role="Data Scientist at Amazon"
               review="MockMate's AI-driven feedback was incredibly insightful. It helped me refine my answers and boost my confidence."
             />
             <ReviewCard
-              image="src/assets/img/jessica.png"
+              image="/assets/img/jessica.png"
               name="Jessica Wong"
               role="Frontend Developer at Meta"
               review="The mock interviews felt just like the real thing. I walked into my interviews fully prepared and landed my dream role!"

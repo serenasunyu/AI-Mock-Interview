@@ -32,7 +32,7 @@ const Footer = () => {
             <div>
             <Link to="/">
               <img
-                src="/src/assets/img/logo.png"
+                src="/assets/img/logo.png"
                 alt="logo"
                 className="h-14 object-contain"
               />
