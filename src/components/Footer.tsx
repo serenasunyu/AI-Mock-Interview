@@ -74,8 +74,8 @@ const Footer = () => {
             {/* products */}
             <div>
             <h3 className="font-bold text-lg mb-4">Products</h3>
-              <Link to="/"><p className="hover:underline hover:text-gray-500 pb-2">AI Mock Interview</p></Link>
-              <Link to="/"><p className="hover:underline hover:text-gray-500 pb-2">Interview Question Generator</p></Link>
+              <Link to="/question-list"><p className="hover:underline hover:text-gray-500 pb-2">AI Mock Interview</p></Link>
+              <Link to="/questions"><p className="hover:underline hover:text-gray-500 pb-2">Interview Question Generator</p></Link>
             </div>
 
             {/* contact us */}
