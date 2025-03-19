@@ -37,7 +37,7 @@ const ToggleContainer = () => {
                             "text-base text-neutral-600",
                             isActive && "text-neutral-900 font-semibold"
                         )}>
-                            Take an interview
+                            {/* Take an interview */}
                         </NavLink>
                     )
                 }
