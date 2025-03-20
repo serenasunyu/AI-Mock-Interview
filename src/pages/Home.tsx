@@ -36,7 +36,7 @@ const Home = () => {
                 </Button>
               </Link>
               <Link
-                to="/demo"
+                to="https://www.awesomescreenshot.com/video/37814772?key=8af2d289a028b443d7af98c0c2346a48clear"
                 className="hover:text-black text-white"
               >
                 <Button className="w-40 h-10 bg-white text-black hover:bg-indigo-300 hover:text-white border">
